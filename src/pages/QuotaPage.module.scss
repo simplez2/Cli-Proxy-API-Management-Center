@@ -456,13 +456,6 @@
   min-width: 0;
 }
 
-.codexResetCredits {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-top: 2px;
-}
-
 .codexResetCreditsTitle {
   font-size: 12px;
   font-weight: 600;
@@ -470,32 +463,71 @@
   line-height: 1.35;
 }
 
-.codexResetCreditRow {
+.codexResetCreditPicker {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: $spacing-sm;
-  padding: 6px 8px;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  margin: $spacing-sm 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.codexResetCreditPicker .codexResetCreditsTitle {
+  padding: 0;
+}
+
+.codexResetCreditOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
   border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
   border-radius: $radius-sm;
   background-color: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
-  font-size: 12px;
-  line-height: 1.35;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+
+  input {
+    flex: 0 0 auto;
+    margin: 2px 0 0;
+    accent-color: var(--primary-color);
+  }
+
+  &:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+}
+
+.codexResetCreditOptionSelected {
+  border-color: var(--primary-color);
+  background-color: color-mix(in srgb, var(--primary-color) 9%, var(--bg-secondary));
+}
+
+.codexResetCreditOptionText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
   min-width: 0;
 }
 
-.codexResetCreditLabel {
-  color: var(--text-tertiary);
-  flex: 0 0 auto;
-  white-space: nowrap;
-}
-
-.codexResetCreditTime {
+.codexResetCreditOptionLabel {
   color: var(--text-primary);
+  font-size: 12px;
   font-weight: 600;
-  text-align: right;
+  line-height: 1.35;
   overflow-wrap: anywhere;
-  min-width: 0;
+}
+
+.codexResetCreditOptionDescription {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .codexResetCreditsError {
