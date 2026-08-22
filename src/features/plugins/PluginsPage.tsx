@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import {
+  IconExternalLink,
   IconGithub,
   IconPlug,
   IconRefreshCw,
@@ -32,6 +33,8 @@ import {
   type PluginConfigDraft,
 } from './pluginConfigDraft';
 import {
+  buildAgentIdentityManagementURL,
+  CODEX_AGENT_IDENTITY_PLUGIN_ID,
   getPluginTitle,
   notifyPluginResourcesChanged,
   resolvePluginAssetURL,
@@ -574,6 +577,7 @@ export function PluginsPage() {
             const actionBusy = Boolean(mutatingID || openingConfigID || deletingID);
             const version = plugin.metadata?.version;
             const author = plugin.metadata?.author;
+            const isAgentIdentity = plugin.id === CODEX_AGENT_IDENTITY_PLUGIN_ID;
 
             return (
               <article key={plugin.id} className={styles.pluginRow}>
@@ -642,6 +646,24 @@ export function PluginsPage() {
 
                 {/* Actions */}
                 <div className={styles.rowActions}>
+                  {isAgentIdentity ? (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() =>
+                        window.open(
+                          buildAgentIdentityManagementURL(apiBase),
+                          '_blank',
+                          'noopener,noreferrer'
+                        )
+                      }
+                      disabled={!connected || actionBusy || !plugin.effectiveEnabled}
+                      title={t('plugin_management.agent_identity_management_hint')}
+                    >
+                      <IconExternalLink size={14} />
+                      {t('plugin_management.agent_identity_management')}
+                    </Button>
+                  ) : null}
                   <ToggleSwitch
                     checked={plugin.enabled}
                     onChange={(enabled) => handleTogglePlugin(plugin, enabled)}

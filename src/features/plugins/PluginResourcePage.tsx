@@ -7,6 +7,8 @@ import { pluginsApi } from '@/services/api';
 import { useAuthStore } from '@/stores';
 import { getErrorMessage, isRecord } from '@/utils/helpers';
 import type { PluginListResponse } from '@/types';
+import { CodexAgentIdentityPage } from './CodexAgentIdentityPage';
+import { CodexQuotaSchedulerPage } from './CodexQuotaSchedulerPage';
 import {
   collectPluginResourceEntries,
   PLUGIN_RESOURCES_REFRESH_EVENT,
@@ -85,7 +87,8 @@ export function PluginResourcePage() {
     return entries.find((entry) => entry.pluginID === pluginID && entry.menuIndex === menuIndex);
   }, [data?.plugins, menuIndex, pluginID]);
 
-  const iframeSrc = resource ? resolvePluginAssetURL(resource.menu.path, apiBase) : '';
+  const iframeSrc =
+    resource?.kind === 'iframe' ? resolvePluginAssetURL(resource.menu.path, apiBase) : '';
 
   return (
     <div className={styles.page}>
@@ -104,6 +107,10 @@ export function PluginResourcePage() {
             description={t('plugin_resource.not_found_desc')}
           />
         </div>
+      ) : resource.kind === 'codex-agent-identity' ? (
+        <CodexAgentIdentityPage />
+      ) : resource.kind === 'codex-quota-scheduler' ? (
+        <CodexQuotaSchedulerPage />
       ) : !iframeSrc ? (
         <div className={styles.stateShell}>
           <EmptyState

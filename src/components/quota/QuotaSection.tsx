@@ -20,7 +20,7 @@ import { getStatusFromError } from '@/utils/quota';
 import { QuotaCard } from './QuotaCard';
 import type { QuotaStatusState } from './QuotaCard';
 import { useQuotaLoader } from './useQuotaLoader';
-import type { QuotaConfig } from './quotaConfigs';
+import type { QuotaConfig, QuotaResetOption } from './quotaConfigs';
 import { useGridColumns } from './useGridColumns';
 import { IconRefreshCw } from '@/components/ui/icons';
 import styles from '@/pages/QuotaPage.module.scss';
@@ -115,6 +115,9 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
   const [viewMode, setViewMode] = useState<ViewMode>('paged');
   const [showTooManyWarning, setShowTooManyWarning] = useState(false);
   const [resettingQuotaName, setResettingQuotaName] = useState<string | null>(null);
+  const [selectedResetOptionKeys, setSelectedResetOptionKeys] = useState<Record<string, string>>(
+    {}
+  );
 
   const filteredFiles = useMemo(
     () => files.filter((file) => config.filterFn(file)),
@@ -242,7 +245,7 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
   );
 
   const resetQuotaForFile = useCallback(
-    (file: AuthFileItem) => {
+    (file: AuthFileItem, selectedOption?: QuotaResetOption) => {
       const resetQuota = config.resetQuota;
       if (!resetQuota) return;
       if (disabled || file.disabled) return;
@@ -251,20 +254,30 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
 
       showConfirmation({
         title: t('codex_quota.reset_confirm_title'),
-        message: t('codex_quota.reset_confirm_message', { name: file.name }),
+        message: selectedOption
+          ? t('codex_quota.reset_confirm_selected_message', {
+              name: file.name,
+              credit: selectedOption.label,
+            })
+          : t('codex_quota.reset_confirm_message', { name: file.name }),
         confirmText: t('codex_quota.reset_confirm_button'),
         variant: 'primary',
         onConfirm: async () => {
           const cacheGeneration = captureQuotaCacheGeneration();
           setResettingQuotaName(file.name);
           try {
-            const data = await resetQuota(file, t);
+            const data = await resetQuota(file, t, selectedOption);
             commitIfQuotaCacheCurrent(cacheGeneration, () => {
               setQuota((prev) => ({
                 ...prev,
                 [file.name]: config.buildSuccessState(data),
               }));
               showNotification(t('codex_quota.reset_success', { name: file.name }), 'success');
+              setSelectedResetOptionKeys((current) => {
+                const next = { ...current };
+                delete next[file.name];
+                return next;
+              });
             });
           } catch (err: unknown) {
             const message = err instanceof Error ? err.message : t('common.unknown_error');
@@ -358,14 +371,61 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
                 !disabled && !item.disabled && itemQuota?.status !== 'loading';
               const showResetQuotaAction =
                 itemQuota !== undefined && Boolean(config.canResetQuota?.(itemQuota));
+              const resetOptions = itemQuota ? (config.getResetOptions?.(itemQuota, t) ?? []) : [];
+              const selectedResetOption =
+                resetOptions.find((option) => option.key === selectedResetOptionKeys[item.name]) ??
+                resetOptions[0];
+              const resetQuotaOptions =
+                config.getResetOptions && resetOptions.length > 0 ? (
+                  <fieldset className={styles.codexResetCreditPicker}>
+                    <legend className={styles.codexResetCreditsTitle}>
+                      {t('codex_quota.reset_credit_picker_label')}
+                    </legend>
+                    {resetOptions.map((option) => {
+                      const selected = selectedResetOption?.key === option.key;
+                      return (
+                        <label
+                          key={option.key}
+                          className={`${styles.codexResetCreditOption} ${
+                            selected ? styles.codexResetCreditOptionSelected : ''
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`${config.type}-reset-credit-${item.name}`}
+                            value={option.key}
+                            checked={selected}
+                            disabled={!canUseQuotaAction || isResettingQuota}
+                            onChange={() =>
+                              setSelectedResetOptionKeys((current) => ({
+                                ...current,
+                                [item.name]: option.key,
+                              }))
+                            }
+                          />
+                          <span className={styles.codexResetCreditOptionText}>
+                            <span className={styles.codexResetCreditOptionLabel}>
+                              {option.label}
+                            </span>
+                            <span className={styles.codexResetCreditOptionDescription}>
+                              {option.description}
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </fieldset>
+                ) : undefined;
               const resetQuotaAction =
-                config.resetQuota && showResetQuotaAction ? (
+                config.resetQuota &&
+                showResetQuotaAction &&
+                (!config.getResetOptions || selectedResetOption) ? (
                   <Button
                     type="button"
                     variant="secondary"
                     size="sm"
                     className={styles.quotaResetCreditButton}
-                    onClick={() => resetQuotaForFile(item)}
+                    onClick={() => resetQuotaForFile(item, selectedResetOption)}
                     disabled={!canUseQuotaAction || isResettingQuota}
                     loading={isResettingQuota}
                     title={t('codex_quota.reset_button')}
@@ -388,6 +448,7 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
                   canRefresh={canUseQuotaAction && !isResettingQuota}
                   onRefresh={() => void refreshQuotaForFile(item)}
                   resetQuotaAction={resetQuotaAction}
+                  resetQuotaOptions={resetQuotaOptions}
                   renderQuotaItems={config.renderQuotaItems}
                 />
               );

@@ -5,6 +5,12 @@ import {
   normalizeManagementOAuthProviderKey,
 } from '@/utils/providerKeys';
 import type {
+  CodexQuotaSchedulerConfig,
+  CodexQuotaSchedulerConfigPatch,
+  CodexQuotaSchedulerQuarantineStatus,
+  CodexQuotaSchedulerSnapshotStatus,
+  CodexQuotaSchedulerStatus,
+  CodexQuotaSchedulerWarmupStatus,
   PluginConfigField,
   PluginConfigObject,
   PluginDeleteResult,
@@ -25,6 +31,11 @@ const asString = (value: unknown): string => {
 };
 
 const asBoolean = (value: unknown): boolean => value === true;
+
+const asNumber = (value: unknown): number => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const normalizePluginOAuthProvider = (value: unknown): string | undefined => {
   const provider = normalizeManagementOAuthProviderKey(asString(value));
@@ -151,6 +162,125 @@ const normalizeDeleteResult = (value: unknown): PluginDeleteResult => {
     fileDeleted: asBoolean(source.file_deleted),
     configuredRemoved: asBoolean(source.configured_removed),
     restartRequired: asBoolean(source.restart_required),
+  };
+};
+
+const normalizeQuotaSchedulerQuarantine = (value: unknown): CodexQuotaSchedulerQuarantineStatus => {
+  const source = isRecord(value) ? value : {};
+  return {
+    total: asNumber(source.total),
+    cooldown: asNumber(source.cooldown),
+    probation: asNumber(source.probation),
+    halfOpen: asNumber(source.half_open),
+    probeReady: asNumber(source.probe_ready),
+    total429s: asNumber(source.total_429s),
+    probation429s: asNumber(source.probation_429s),
+    probeStarts: asNumber(source.probe_starts),
+    probeSuccesses: asNumber(source.probe_successes),
+    probeFailures: asNumber(source.probe_failures),
+  };
+};
+
+const normalizeQuotaSchedulerSnapshot = (
+  value: unknown
+): CodexQuotaSchedulerSnapshotStatus | null => {
+  if (!isRecord(value)) return null;
+  const authID = asString(value.auth_id).trim();
+  if (!authID) return null;
+  return {
+    authID,
+    window: asString(value.window).trim(),
+    usedPercent: asNumber(value.used_percent),
+    resetCredits: asNumber(value.reset_credits),
+    resetAt: asString(value.reset_at).trim(),
+    fresh: asBoolean(value.fresh),
+    eligible: asBoolean(value.eligible),
+    reason: asString(value.reason).trim(),
+  };
+};
+
+const normalizeQuotaSchedulerWarmup = (value: unknown): CodexQuotaSchedulerWarmupStatus | null => {
+  if (!isRecord(value)) return null;
+  const authID = asString(value.auth_id).trim();
+  if (!authID) return null;
+  return {
+    authID,
+    window: asString(value.window).trim(),
+    attemptedAt: asString(value.attempted_at).trim(),
+    activatedAt: asString(value.activated_at).trim(),
+    resetAt: asString(value.reset_at).trim(),
+    status: asNumber(value.status),
+    error: asString(value.error).trim(),
+  };
+};
+
+const normalizeQuotaSchedulerStatus = (value: unknown): CodexQuotaSchedulerStatus => {
+  if (!isRecord(value)) {
+    throw new Error('Invalid Codex Quota Scheduler status response');
+  }
+
+  const snapshots = Array.isArray(value.snapshots)
+    ? (value.snapshots
+        .map((item) => normalizeQuotaSchedulerSnapshot(item))
+        .filter(Boolean) as CodexQuotaSchedulerSnapshotStatus[])
+    : [];
+  const warmups = Array.isArray(value.warmups)
+    ? (value.warmups
+        .map((item) => normalizeQuotaSchedulerWarmup(item))
+        .filter(Boolean) as CodexQuotaSchedulerWarmupStatus[])
+    : [];
+
+  const manualActiveAuthID = asString(
+    value.serial_manual_active_auth_id ??
+      value.manual_active_auth_id ??
+      value.manual_serial_active_auth_id
+  ).trim();
+  const rawSelectionSource = asString(value.serial_selection_source).trim().toLowerCase();
+  const serialSelectionSource: 'auto' | 'manual' =
+    rawSelectionSource === 'manual' ||
+    Boolean(manualActiveAuthID) ||
+    asBoolean(value.serial_manual_selection) ||
+    asBoolean(value.serial_manual_lock)
+      ? 'manual'
+      : 'auto';
+
+  return {
+    enabled: asBoolean(value.enabled),
+    schedulerMode: asString(value.scheduler_mode).trim(),
+    serialSwitchPercent: asNumber(value.serial_switch_percent),
+    warmupModel: asString(value.warmup_model).trim(),
+    serialActiveAuthID: asString(value.serial_active_auth_id).trim(),
+    serialSelectionSource,
+    serialManualActiveAuthID: manualActiveAuthID,
+    serialSelectedAt: asString(value.serial_selected_at).trim(),
+    serialSwitches: asNumber(value.serial_switches),
+    serialProvisionalFallbacks: asNumber(value.serial_provisional_fallbacks),
+    serialProvisionalAuthID: asString(value.serial_provisional_auth_id).trim(),
+    serialCandidateMissingSince: asString(value.serial_candidate_missing_since).trim(),
+    serialCandidateMissingConfirmations: asNumber(
+      value.serial_candidate_missing_confirmations
+    ),
+    serialLastSwitchAt: asString(value.serial_last_switch_at).trim(),
+    serialLastSwitchReason: asString(value.serial_last_switch_reason).trim(),
+    keeperConfigured: asBoolean(value.keeper_configured),
+    warmupEnabled: asBoolean(value.warmup_enabled),
+    refreshes: asNumber(value.refreshes),
+    lastRefresh: asString(value.last_refresh).trim(),
+    lastError: asString(value.last_error).trim(),
+    freshSnapshots: asNumber(value.fresh_snapshots),
+    quarantine: normalizeQuotaSchedulerQuarantine(value.quarantine),
+    snapshots,
+    warmups,
+  };
+};
+
+const normalizeQuotaSchedulerConfig = (value: unknown): CodexQuotaSchedulerConfig => {
+  const source = isRecord(value) ? value : {};
+  const threshold = asNumber(source.serial_switch_percent);
+  return {
+    schedulerMode: asString(source.scheduler_mode).trim() || 'serial',
+    serialSwitchPercent: threshold > 0 ? threshold : 98,
+    warmupModel: asString(source.warmup_model).trim(),
   };
 };
 
@@ -282,6 +412,34 @@ export const pluginsApi = {
 
   patchConfig: (id: string, config: PluginConfigObject) =>
     apiClient.patch(`/plugins/${encodeURIComponent(id)}/config`, config),
+
+  async getQuotaSchedulerStatus(): Promise<CodexQuotaSchedulerStatus> {
+    const data = await apiClient.get('/plugins/codex-quota-scheduler/quota');
+    return normalizeQuotaSchedulerStatus(data);
+  },
+
+  async getQuotaSchedulerConfig(): Promise<CodexQuotaSchedulerConfig> {
+    const data = await apiClient.get('/plugins/codex-quota-scheduler/config');
+    return normalizeQuotaSchedulerConfig(data);
+  },
+
+  patchQuotaSchedulerConfig(config: CodexQuotaSchedulerConfigPatch) {
+    const patch: PluginConfigObject = {};
+    if (config.schedulerMode !== undefined) patch.scheduler_mode = config.schedulerMode;
+    if (config.serialSwitchPercent !== undefined) {
+      patch.serial_switch_percent = config.serialSwitchPercent;
+    }
+    if (config.warmupModel !== undefined) patch.warmup_model = config.warmupModel;
+    return apiClient.patch('/plugins/codex-quota-scheduler/config', patch);
+  },
+
+  setQuotaSchedulerSerialActive(authID: string) {
+    return apiClient.put('/plugins/codex-quota-scheduler/serial-active', { auth_id: authID });
+  },
+
+  clearQuotaSchedulerSerialActive() {
+    return apiClient.delete('/plugins/codex-quota-scheduler/serial-active');
+  },
 };
 
 export const pluginStoreApi = {

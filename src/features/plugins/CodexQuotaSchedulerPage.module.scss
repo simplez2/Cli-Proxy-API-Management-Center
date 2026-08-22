@@ -1,0 +1,529 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  width: 100%;
+  min-height: 100%;
+  padding: 70px clamp(20px, 3vw, 48px) 40px;
+  overflow: auto;
+  box-sizing: border-box;
+  color: var(--text-primary);
+  background: linear-gradient(180deg, var(--bg-secondary), var(--bg-quinary, var(--bg-secondary)));
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-lg;
+
+  :global(.btn > span) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.headerCopy {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin-bottom: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.description {
+  max-width: 780px;
+  margin: $spacing-sm 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.errorBox,
+.warningBox,
+.loadingPanel,
+.securityNote {
+  margin-bottom: $spacing-lg;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.errorBox {
+  border: 1px solid var(--danger-color);
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 9%, var(--bg-primary));
+}
+
+.warningBox {
+  border: 1px solid color-mix(in srgb, var(--warning-color, #c65746) 42%, var(--border-color));
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--warning-color, #c65746) 9%, var(--bg-primary));
+}
+
+.loadingPanel {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  background: var(--bg-primary);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+
+  @media (max-width: 1180px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.controlPanel {
+  margin-bottom: $spacing-lg;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-color) 86%, transparent);
+  border-radius: $radius-lg;
+  background: var(--bg-primary);
+  box-shadow: 0 14px 32px -30px color-mix(in srgb, var(--text-primary) 35%, transparent);
+}
+
+.controlHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-secondary) 74%, transparent);
+
+  h2 {
+    margin: 2px 0 0;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 720;
+  }
+
+  p {
+    max-width: 720px;
+    margin: 7px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
+.controlKicker {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.controlGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--border-color);
+}
+
+.controlField {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: $spacing-lg;
+  background: var(--bg-primary);
+
+  > label {
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  > p {
+    min-height: 36px;
+    margin: 0;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  :global(.form-group) {
+    margin: 0;
+  }
+}
+
+.thresholdControl {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 104px;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.range {
+  width: 100%;
+  height: 4px;
+  border-radius: $radius-full;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--primary-color) 28%, transparent);
+    outline-offset: 5px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+}
+
+.unit {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fieldWarning {
+  color: var(--warning-text, var(--warning-color)) !important;
+}
+
+.controlFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-lg;
+  padding: 14px $spacing-lg;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.applyState {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.controlActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+  flex: 0 0 auto;
+}
+
+.loadingPanel {
+  gap: $spacing-sm;
+}
+
+@media (max-width: 900px) {
+  .controlGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.summaryCard,
+.panel {
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 96%, transparent);
+  box-shadow: 0 12px 28px -26px color-mix(in srgb, var(--text-primary) 28%, transparent);
+}
+
+.summaryCard {
+  min-width: 0;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: $spacing-lg;
+  border-radius: $radius-lg;
+}
+
+.summaryLabel {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.summaryValue {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 720;
+  line-height: 1.3;
+}
+
+.summaryDetail {
+  margin-top: auto;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.badge {
+  width: fit-content;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-full;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.badgeDot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badgeSuccess {
+  border-color: color-mix(in srgb, var(--success-color, #2f855a) 42%, var(--border-color));
+  color: var(--success-color, #2f855a);
+  background: color-mix(in srgb, var(--success-color, #2f855a) 9%, var(--bg-primary));
+}
+
+.badgeMuted {
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  min-width: 0;
+  padding: $spacing-lg;
+  border-radius: $radius-lg;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+
+  h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 5px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+}
+
+.definitionList {
+  display: grid;
+  gap: 0;
+  margin: 0;
+
+  > div {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: $spacing-md;
+    padding: 11px 0;
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  }
+
+  dt {
+    color: var(--text-secondary);
+    font-size: 13px;
+  }
+
+  dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 620;
+    text-align: right;
+  }
+}
+
+.accountsPanel {
+  margin-bottom: $spacing-lg;
+}
+
+.countPill {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  border-radius: $radius-full;
+  color: var(--count-badge-text);
+  background: var(--count-badge-bg);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tableScroller {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--border-color) 72%, transparent);
+  border-radius: $radius-md;
+}
+
+.table {
+  width: 100%;
+  min-width: 920px;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 12px 14px;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-color) 68%, transparent);
+    color: var(--text-primary);
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover td {
+    background: var(--bg-hover);
+  }
+}
+
+.accountCell {
+  max-width: 300px;
+  overflow-wrap: anywhere;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-weight: 620;
+}
+
+.emptyState {
+  padding: $spacing-xl;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.securityNote {
+  margin-bottom: 0;
+  border: 1px dashed color-mix(in srgb, var(--border-color) 90%, transparent);
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+}
+
+@include mobile {
+  .page {
+    padding: calc(var(--header-height) + 16px) $spacing-md $spacing-lg;
+  }
+
+  .summaryCard,
+  .panel {
+    padding: $spacing-md;
+  }
+
+  .controlHeader {
+    flex-direction: column;
+    padding: $spacing-md;
+  }
+
+  .controlField {
+    padding: $spacing-md;
+  }
+
+  .thresholdControl {
+    grid-template-columns: 1fr 96px;
+  }
+
+  .controlFooter {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px $spacing-md;
+    box-shadow: 0 -10px 22px -22px color-mix(in srgb, var(--text-primary) 45%, transparent);
+  }
+
+  .controlActions {
+    width: 100%;
+  }
+
+  .controlActions :global(.btn) {
+    flex: 1;
+  }
+
+  .definitionList > div {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .definitionList dd {
+    text-align: left;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .range {
+    scroll-behavior: auto;
+  }
+}

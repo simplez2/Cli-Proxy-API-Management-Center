@@ -1,11 +1,5 @@
 export type PluginConfigFieldType =
-  | 'string'
-  | 'number'
-  | 'integer'
-  | 'boolean'
-  | 'enum'
-  | 'array'
-  | 'object';
+  'string' | 'number' | 'integer' | 'boolean' | 'enum' | 'array' | 'object';
 
 export interface PluginConfigField {
   name: string;
@@ -120,4 +114,77 @@ export interface PluginStoreInstallResult {
   path: string;
   pluginsEnabled: boolean;
   restartRequired: boolean;
+}
+
+export interface CodexQuotaSchedulerQuarantineStatus {
+  total: number;
+  cooldown: number;
+  probation: number;
+  halfOpen: number;
+  probeReady: number;
+  total429s: number;
+  probation429s: number;
+  probeStarts: number;
+  probeSuccesses: number;
+  probeFailures: number;
+}
+
+export interface CodexQuotaSchedulerSnapshotStatus {
+  authID: string;
+  window: string;
+  usedPercent: number;
+  resetCredits: number;
+  resetAt: string;
+  fresh: boolean;
+  eligible: boolean;
+  reason: string;
+}
+
+export interface CodexQuotaSchedulerWarmupStatus {
+  authID: string;
+  window: string;
+  attemptedAt: string;
+  activatedAt: string;
+  resetAt: string;
+  status: number;
+  error: string;
+}
+
+export interface CodexQuotaSchedulerStatus {
+  enabled: boolean;
+  schedulerMode: string;
+  serialSwitchPercent: number;
+  warmupModel: string;
+  serialActiveAuthID: string;
+  serialSelectionSource: 'auto' | 'manual';
+  serialManualActiveAuthID: string;
+  serialSelectedAt: string;
+  serialSwitches: number;
+  serialProvisionalFallbacks: number;
+  serialProvisionalAuthID: string;
+  serialCandidateMissingSince: string;
+  serialCandidateMissingConfirmations: number;
+  serialLastSwitchAt: string;
+  serialLastSwitchReason: string;
+  keeperConfigured: boolean;
+  warmupEnabled: boolean;
+  refreshes: number;
+  lastRefresh: string;
+  lastError: string;
+  freshSnapshots: number;
+  quarantine: CodexQuotaSchedulerQuarantineStatus;
+  snapshots: CodexQuotaSchedulerSnapshotStatus[];
+  warmups: CodexQuotaSchedulerWarmupStatus[];
+}
+
+export interface CodexQuotaSchedulerConfig {
+  schedulerMode: string;
+  serialSwitchPercent: number;
+  warmupModel: string;
+}
+
+export interface CodexQuotaSchedulerConfigPatch {
+  schedulerMode?: string;
+  serialSwitchPercent?: number;
+  warmupModel?: string;
 }

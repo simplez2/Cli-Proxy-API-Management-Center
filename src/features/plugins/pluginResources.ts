@@ -2,6 +2,13 @@ import type { PluginListEntry, PluginMenu, PluginStoreEntry } from '@/types';
 import { normalizeApiBase } from '@/utils/connection';
 
 export const PLUGIN_RESOURCES_REFRESH_EVENT = 'plugin-resources-refresh';
+export const CODEX_AGENT_IDENTITY_PLUGIN_ID = 'codex-agent-identity';
+export const CODEX_QUOTA_SCHEDULER_PLUGIN_ID = 'codex-quota-scheduler';
+
+export type PluginResourceKind =
+  | 'iframe'
+  | 'codex-agent-identity'
+  | 'codex-quota-scheduler';
 
 export const notifyPluginResourcesChanged = () => {
   window.dispatchEvent(new Event(PLUGIN_RESOURCES_REFRESH_EVENT));
@@ -11,6 +18,7 @@ export interface PluginResourceEntry {
   pluginID: string;
   pluginTitle: string;
   pluginLogo: string;
+  kind: PluginResourceKind;
   menuIndex: number;
   menu: PluginMenu;
   label: string;
@@ -31,6 +39,17 @@ export const resolvePluginAssetURL = (value: string, apiBase: string) => {
   if (!trimmed.startsWith('/')) return trimmed;
   const base = normalizeApiBase(apiBase);
   return base ? `${base}${trimmed}` : trimmed;
+};
+
+export const buildAgentIdentityManagementURL = (apiBase: string): string => {
+  const base = normalizeApiBase(apiBase);
+  const fallbackOrigin = typeof window === 'undefined' ? '' : window.location.origin;
+
+  try {
+    return new URL('/agent-identity/', base || fallbackOrigin).toString();
+  } catch {
+    return '/agent-identity/';
+  }
 };
 
 // Registry entries usually carry an "owner/repo" slug rather than a full URL.
@@ -91,6 +110,32 @@ export const collectPluginResourceEntries = (plugins: PluginListEntry[]): Plugin
     const pluginTitle = getPluginTitle(plugin);
     const pluginLogo = plugin.logo || plugin.metadata?.logo || '';
 
+    // These plugins intentionally expose no unauthenticated resource menu.
+    // CPAMC provides native pages instead of placing privileged or dynamic UI
+    // under the public /v0/resource/plugins/... route family.
+    const nativeKind: PluginResourceKind | null =
+      plugin.id === CODEX_AGENT_IDENTITY_PLUGIN_ID
+        ? 'codex-agent-identity'
+        : plugin.id === CODEX_QUOTA_SCHEDULER_PLUGIN_ID
+          ? 'codex-quota-scheduler'
+          : null;
+
+    if (nativeKind) {
+      return [
+        {
+          pluginID: plugin.id,
+          pluginTitle,
+          pluginLogo,
+          kind: nativeKind,
+          menuIndex: 0,
+          menu: { path: '', menu: pluginTitle, description: pluginTitle },
+          label: pluginTitle,
+          description: pluginTitle,
+          route: buildPluginResourceRoute(plugin.id, 0),
+        },
+      ];
+    }
+
     return plugin.menus
       .map((menu, menuIndex): PluginResourceEntry | null => {
         const path = menu.path.trim();
@@ -101,6 +146,7 @@ export const collectPluginResourceEntries = (plugins: PluginListEntry[]): Plugin
           pluginID: plugin.id,
           pluginTitle,
           pluginLogo,
+          kind: 'iframe',
           menuIndex,
           menu: { ...menu, path },
           label: menuLabel || pluginTitle,

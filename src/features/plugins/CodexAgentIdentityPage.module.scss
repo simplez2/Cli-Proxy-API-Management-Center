@@ -1,0 +1,213 @@
+@use '../../styles/variables' as *;
+@use '../../styles/mixins' as *;
+
+.page {
+  width: 100%;
+  min-height: 100%;
+  padding: 70px clamp(20px, 3vw, 48px) 40px;
+  overflow: auto;
+  box-sizing: border-box;
+  color: var(--text-primary);
+  background: linear-gradient(180deg, var(--bg-secondary), var(--bg-quinary, var(--bg-secondary)));
+}
+
+.pageHeader {
+  margin-bottom: $spacing-lg;
+}
+
+.eyebrow {
+  margin-bottom: 6px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.description {
+  max-width: 780px;
+  margin: $spacing-sm 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.launchPanel,
+.featureCard,
+.securityPanel {
+  border: 1px solid color-mix(in srgb, var(--border-color) 82%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 96%, transparent);
+  box-shadow: 0 12px 28px -26px color-mix(in srgb, var(--text-primary) 28%, transparent);
+}
+
+.launchPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-xl;
+  margin-bottom: $spacing-lg;
+  padding: clamp(20px, 3vw, 32px);
+  border-radius: $radius-lg;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.launchCopy {
+  min-width: 0;
+
+  h2 {
+    margin: $spacing-sm 0 0;
+    color: var(--text-primary);
+    font-size: 21px;
+    font-weight: 700;
+  }
+
+  p {
+    max-width: 720px;
+    margin: $spacing-sm 0 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.55;
+  }
+}
+
+.statusBadge {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--success-color, #2f855a) 42%, var(--border-color));
+  border-radius: $radius-full;
+  color: var(--success-color, #2f855a);
+  background: color-mix(in srgb, var(--success-color, #2f855a) 9%, var(--bg-primary));
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statusDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.launchAction {
+  min-width: min(100%, 260px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+
+  :global(.btn > span) {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  > span {
+    color: var(--text-tertiary);
+    font-size: 12px;
+    text-align: right;
+  }
+
+  @include mobile {
+    min-width: 0;
+    align-items: stretch;
+
+    > span {
+      text-align: left;
+    }
+  }
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.featureCard {
+  min-width: 0;
+  padding: $spacing-lg;
+  border-radius: $radius-lg;
+
+  h2 {
+    margin: $spacing-md 0 0;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: $spacing-sm 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+}
+
+.featureIcon,
+.securityIcon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-md;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+}
+
+.securityPanel {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  border-style: dashed;
+  border-radius: $radius-lg;
+  box-shadow: none;
+
+  h2 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 6px 0 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+}
+
+@include mobile {
+  .page {
+    padding: calc(var(--header-height) + 16px) $spacing-md $spacing-lg;
+  }
+
+  .featureCard,
+  .securityPanel {
+    padding: $spacing-md;
+  }
+}
