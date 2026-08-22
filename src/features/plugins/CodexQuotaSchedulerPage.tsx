@@ -294,7 +294,11 @@ export function CodexQuotaSchedulerPage() {
     if (!Number.isFinite(parsedThreshold) || parsedThreshold < 1 || parsedThreshold > 100) {
       return t('quota_scheduler.invalid_threshold');
     }
-    if (!draftWarmupModel.trim()) return t('quota_scheduler.model_required');
+    const warmupModel = draftWarmupModel.trim();
+    if (!warmupModel) return t('quota_scheduler.model_required');
+    if (warmupModel.length > 256 || !/^[A-Za-z0-9._:/-]+$/.test(warmupModel)) {
+      return t('quota_scheduler.invalid_model_id');
+    }
     if (effectiveDraftSerial !== AUTO_AUTH && !eligibleAuthIDs.has(effectiveDraftSerial)) {
       return t('quota_scheduler.account_not_eligible');
     }

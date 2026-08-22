@@ -1350,6 +1350,7 @@
     "partial_save": "Some settings were applied; review the current state",
     "invalid_threshold": "The switch threshold must be between 1% and 100%.",
     "model_required": "Warmup model is required.",
+    "invalid_model_id": "Use a model ID of at most 256 characters containing only letters, numbers, dots, underscores, hyphens, slashes, or colons.",
     "account_not_eligible": "The selected account is not currently schedulable. Choose an eligible account or automatic selection.",
     "confirm_routing_title": "Confirm routing policy change",
     "confirm_routing_message": "This affects account selection for new sessions. It does not trigger warmup, call a model, or consume a reset credit.",
