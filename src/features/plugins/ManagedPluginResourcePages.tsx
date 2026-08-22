@@ -17,6 +17,7 @@ import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { apiClient } from '@/services/api/client';
 import { getErrorMessage } from '@/utils/helpers';
 import { openAgentIdentityManagement } from './agentIdentityManagement';
+import { QuotaSchedulerControls } from './QuotaSchedulerControls';
 import {
   normalizeQuotaSchedulerStatus,
   type QuotaSchedulerStatus,
@@ -225,6 +226,9 @@ export function QuotaSchedulerManagementPage({ connected }: { connected: boolean
           <div className={styles.statusPanel}>{t('common.loading')}</div>
         ) : (
           <div className={styles.schedulerSurface}>
+            {status ? (
+              <QuotaSchedulerControls connected={connected} status={status} onSaved={loadStatus} />
+            ) : null}
             <section
               className={`${styles.schedulerCommand} ${
                 runtimeHealthy && !protectionActive
