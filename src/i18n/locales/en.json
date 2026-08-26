@@ -1358,7 +1358,20 @@
     "unsaved_changes": "Unsaved changes",
     "settings_current": "Synced with runtime",
     "unsaved_hint": "Press Ctrl/⌘ + Enter to apply changes.",
-    "security_note": "This page calls only Management-key authenticated /v0/management/... endpoints. It does not use a public resource route or privileged iframe."
+    "security_note": "This page calls only Management-key authenticated /v0/management/... endpoints. It does not use a public resource route or privileged iframe.",
+    "five_hour_policy": "5h window policy",
+    "five_hour_mode_inherit_global": "Follow global threshold",
+    "five_hour_mode_custom_threshold": "Custom 5h threshold",
+    "five_hour_mode_reserve_aware": "Reserve-aware handoff",
+    "five_hour_mode_429_only": "Hard limit / 429 only",
+    "five_hour_mode_inherit_global_hint": "The 5h window follows the global switch threshold, preserving the existing 98% default.",
+    "five_hour_mode_custom_threshold_hint": "The 5h window uses the independent threshold below; weekly and monthly windows keep the global policy.",
+    "five_hour_mode_reserve_aware_hint": "Hand off before the 5h reserve is consumed to reduce single-account exhaustion risk.",
+    "five_hour_mode_429_only_hint": "Ignore the soft 5h threshold and switch only on hard limits, disallowed state, or 429.",
+    "five_hour_threshold": "Independent 5h threshold",
+    "five_hour_threshold_hint": "Used only in custom 5h threshold mode. Range: 1%–100%.",
+    "five_hour_threshold_disabled_hint": "The current mode does not use an independent 5h threshold; the value is kept for later.",
+    "invalid_5h_threshold": "The 5h switch threshold must be between 1% and 100%."
   },
   "system_info": {
     "title": "Management Center Info",

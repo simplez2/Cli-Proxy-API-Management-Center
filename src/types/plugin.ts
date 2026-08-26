@@ -181,10 +181,14 @@ export interface CodexQuotaSchedulerConfig {
   schedulerMode: string;
   serialSwitchPercent: number;
   warmupModel: string;
+  serial5hHandoffMode: string;
+  serial5hSwitchPercent: number;
 }
 
 export interface CodexQuotaSchedulerConfigPatch {
   schedulerMode?: string;
   serialSwitchPercent?: number;
   warmupModel?: string;
+  serial5hHandoffMode?: string;
+  serial5hSwitchPercent?: number;
 }

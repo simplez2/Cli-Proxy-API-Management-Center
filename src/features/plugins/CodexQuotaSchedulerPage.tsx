@@ -136,6 +136,8 @@ export function CodexQuotaSchedulerPage() {
   const [baselineSerialAuth, setBaselineSerialAuth] = useState(AUTO_AUTH);
   const [draftMode, setDraftMode] = useState('serial');
   const [draftThreshold, setDraftThreshold] = useState('98');
+  const [draft5hHandoffMode, setDraft5hHandoffMode] = useState('inherit_global');
+  const [draft5hThreshold, setDraft5hThreshold] = useState('98');
   const [draftWarmupModel, setDraftWarmupModel] = useState('gpt-5.6-luna');
   const [draftSerialAuth, setDraftSerialAuth] = useState(AUTO_AUTH);
   const [loading, setLoading] = useState(true);
@@ -171,6 +173,8 @@ export function CodexQuotaSchedulerPage() {
       if (!preserveDraft) {
         setDraftMode(nextConfig.schedulerMode);
         setDraftThreshold(String(nextConfig.serialSwitchPercent));
+        setDraft5hHandoffMode(nextConfig.serial5hHandoffMode);
+        setDraft5hThreshold(String(nextConfig.serial5hSwitchPercent));
         setDraftWarmupModel(nextConfig.warmupModel);
         setDraftSerialAuth(nextManualAuth);
       }
@@ -223,10 +227,14 @@ export function CodexQuotaSchedulerPage() {
   }, [connected, modelSource, t]);
 
   const parsedThreshold = Number(draftThreshold);
+  const parsed5hThreshold = Number(draft5hThreshold);
+  const fiveHourThresholdEnabled = draft5hHandoffMode === 'custom_threshold';
   const effectiveDraftSerial = draftMode === 'serial' ? draftSerialAuth : AUTO_AUTH;
   const configDirty = Boolean(config) &&
     (draftMode !== config?.schedulerMode ||
       parsedThreshold !== config?.serialSwitchPercent ||
+      draft5hHandoffMode !== config?.serial5hHandoffMode ||
+      parsed5hThreshold !== config?.serial5hSwitchPercent ||
       draftWarmupModel.trim() !== config?.warmupModel);
   const selectionDirty = effectiveDraftSerial !== baselineSerialAuth;
   const dirty = configDirty || selectionDirty;
@@ -244,6 +252,14 @@ export function CodexQuotaSchedulerPage() {
       ['serial', 'legacy', 'shadow', 'enforce'].map((value) => ({
         value,
         label: t(`quota_scheduler.mode_${value}`),
+      })),
+    [t]
+  );
+  const fiveHourModeOptions = useMemo(
+    () =>
+      ['inherit_global', 'custom_threshold', 'reserve_aware', '429_only'].map((value) => ({
+        value,
+        label: t(`quota_scheduler.five_hour_mode_${value}`),
       })),
     [t]
   );
@@ -285,6 +301,8 @@ export function CodexQuotaSchedulerPage() {
     if (!config) return;
     setDraftMode(config.schedulerMode);
     setDraftThreshold(String(config.serialSwitchPercent));
+    setDraft5hHandoffMode(config.serial5hHandoffMode);
+    setDraft5hThreshold(String(config.serial5hSwitchPercent));
     setDraftWarmupModel(config.warmupModel);
     setDraftSerialAuth(baselineSerialAuth);
     setError('');
@@ -293,6 +311,13 @@ export function CodexQuotaSchedulerPage() {
   const validateDraft = (): string => {
     if (!Number.isFinite(parsedThreshold) || parsedThreshold < 1 || parsedThreshold > 100) {
       return t('quota_scheduler.invalid_threshold');
+    }
+    if (
+      !Number.isFinite(parsed5hThreshold) ||
+      parsed5hThreshold < 1 ||
+      parsed5hThreshold > 100
+    ) {
+      return t('quota_scheduler.invalid_5h_threshold');
     }
     const warmupModel = draftWarmupModel.trim();
     if (!warmupModel) return t('quota_scheduler.model_required');
@@ -320,6 +345,12 @@ export function CodexQuotaSchedulerPage() {
         if (draftMode !== config?.schedulerMode) patch.schedulerMode = draftMode;
         if (parsedThreshold !== config?.serialSwitchPercent) {
           patch.serialSwitchPercent = parsedThreshold;
+        }
+        if (draft5hHandoffMode !== config?.serial5hHandoffMode) {
+          patch.serial5hHandoffMode = draft5hHandoffMode;
+        }
+        if (parsed5hThreshold !== config?.serial5hSwitchPercent) {
+          patch.serial5hSwitchPercent = parsed5hThreshold;
         }
         if (draftWarmupModel.trim() !== config?.warmupModel) {
           patch.warmupModel = draftWarmupModel.trim();
@@ -490,6 +521,55 @@ export function CodexQuotaSchedulerPage() {
               </div>
 
               <div className={styles.controlField}>
+                <label id={'five-hour-mode-label'}>{t('quota_scheduler.five_hour_policy')}</label>
+                <Select
+                  value={draft5hHandoffMode}
+                  options={fiveHourModeOptions}
+                  onChange={setDraft5hHandoffMode}
+                  disabled={saving}
+                  ariaLabelledBy={'five-hour-mode-label'}
+                  fullWidth
+                />
+                <p>{t(`quota_scheduler.five_hour_mode_${draft5hHandoffMode}_hint`)}</p>
+              </div>
+
+              <div className={styles.controlField}>
+                <label htmlFor={'five-hour-threshold'}>
+                  {t('quota_scheduler.five_hour_threshold')}
+                </label>
+                <div className={styles.thresholdControl}>
+                  <input
+                    className={styles.range}
+                    type={'range'}
+                    min={'1'}
+                    max={'100'}
+                    step={'1'}
+                    value={Number.isFinite(parsed5hThreshold) ? parsed5hThreshold : 98}
+                    onChange={(event) => setDraft5hThreshold(event.target.value)}
+                    disabled={saving || !fiveHourThresholdEnabled}
+                    aria-label={t('quota_scheduler.five_hour_threshold')}
+                  />
+                  <Input
+                    id={'five-hour-threshold'}
+                    type={'number'}
+                    min={'1'}
+                    max={'100'}
+                    step={'1'}
+                    value={draft5hThreshold}
+                    onChange={(event) => setDraft5hThreshold(event.target.value)}
+                    disabled={saving || !fiveHourThresholdEnabled}
+                    rightElement={<span className={styles.unit}>%</span>}
+                    aria-describedby={'five-hour-threshold-hint'}
+                  />
+                </div>
+                <p id={'five-hour-threshold-hint'}>
+                  {fiveHourThresholdEnabled
+                    ? t('quota_scheduler.five_hour_threshold_hint')
+                    : t('quota_scheduler.five_hour_threshold_disabled_hint')}
+                </p>
+              </div>
+
+              <div className={styles.controlField}>
                 <label id={'warmup-model-label'}>{t('quota_scheduler.warmup_model')}</label>
                 <Select
                   value={draftWarmupModel.trim()}
@@ -594,6 +674,14 @@ export function CodexQuotaSchedulerPage() {
                 <div>
                   <dt>{t('quota_scheduler.switch_threshold')}</dt>
                   <dd>{formatPercent(status.serialSwitchPercent)}</dd>
+                </div>
+                <div>
+                  <dt>{t('quota_scheduler.five_hour_policy')}</dt>
+                  <dd>{t(`quota_scheduler.five_hour_mode_${config.serial5hHandoffMode}`)}</dd>
+                </div>
+                <div>
+                  <dt>{t('quota_scheduler.five_hour_threshold')}</dt>
+                  <dd>{formatPercent(config.serial5hSwitchPercent)}</dd>
                 </div>
                 <div>
                   <dt>{t('quota_scheduler.switch_count')}</dt>

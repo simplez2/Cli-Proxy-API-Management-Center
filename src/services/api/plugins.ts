@@ -277,10 +277,26 @@ const normalizeQuotaSchedulerStatus = (value: unknown): CodexQuotaSchedulerStatu
 const normalizeQuotaSchedulerConfig = (value: unknown): CodexQuotaSchedulerConfig => {
   const source = isRecord(value) ? value : {};
   const threshold = asNumber(source.serial_switch_percent);
+  const serial5hHandoffMode = asString(
+    source.serial_5h_handoff_mode ?? source.serial5hHandoffMode
+  ).trim();
+  const serial5hSwitchPercent = asNumber(
+    source.serial_5h_switch_percent ?? source.serial5hSwitchPercent
+  );
+  const supported5hModes = new Set([
+    'inherit_global',
+    'custom_threshold',
+    'reserve_aware',
+    '429_only',
+  ]);
   return {
     schedulerMode: asString(source.scheduler_mode).trim() || 'serial',
     serialSwitchPercent: threshold > 0 ? threshold : 98,
     warmupModel: asString(source.warmup_model).trim(),
+    serial5hHandoffMode: supported5hModes.has(serial5hHandoffMode)
+      ? serial5hHandoffMode
+      : 'inherit_global',
+    serial5hSwitchPercent: serial5hSwitchPercent > 0 ? serial5hSwitchPercent : 98,
   };
 };
 
@@ -430,6 +446,12 @@ export const pluginsApi = {
       patch.serial_switch_percent = config.serialSwitchPercent;
     }
     if (config.warmupModel !== undefined) patch.warmup_model = config.warmupModel;
+    if (config.serial5hHandoffMode !== undefined) {
+      patch.serial_5h_handoff_mode = config.serial5hHandoffMode;
+    }
+    if (config.serial5hSwitchPercent !== undefined) {
+      patch.serial_5h_switch_percent = config.serial5hSwitchPercent;
+    }
     return apiClient.patch('/plugins/codex-quota-scheduler/config', patch);
   },
 
