@@ -13,11 +13,12 @@ import {
   REQUEST_TIMEOUT_MS,
   VERSION_HEADER_KEYS,
 } from '@/utils/constants';
-import { computeApiUrl } from '@/utils/connection';
+import { computeApiUrl, normalizeApiBase } from '@/utils/connection';
 import { parseApiErrorResponse } from './apiError';
 
 class ApiClient {
   private instance: AxiosInstance;
+  private apiOrigin: string = '';
   private apiBase: string = '';
   private managementKey: string = '';
 
@@ -36,7 +37,8 @@ class ApiClient {
    * 设置 API 配置
    */
   setConfig(config: ApiClientConfig): void {
-    this.apiBase = computeApiUrl(config.apiBase);
+    this.apiOrigin = normalizeApiBase(config.apiBase);
+    this.apiBase = computeApiUrl(this.apiOrigin);
     this.managementKey = config.managementKey;
 
     if (config.timeout) {
@@ -104,8 +106,10 @@ class ApiClient {
     // 请求拦截器
     this.instance.interceptors.request.use(
       (config) => {
-        // 设置 baseURL
-        config.baseURL = this.apiBase;
+        // Preserve an explicit baseURL for authenticated companion routes.
+        if (!config.baseURL) {
+          config.baseURL = this.apiBase;
+        }
 
         // 添加认证头
         if (this.managementKey) {
@@ -191,11 +195,33 @@ class ApiClient {
     return response.data;
   }
 
+  /** GET a same-origin companion route while retaining the Management key. */
+  async getAtOrigin<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.instance.get<T>(url, {
+      ...config,
+      baseURL: this.apiOrigin,
+    });
+    return response.data;
+  }
+
   /**
    * POST 请求
    */
   async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.post<T>(url, data, config);
+    return response.data;
+  }
+
+  /** POST a same-origin companion route with the Management key. */
+  async postAtOrigin<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<T> {
+    const response = await this.instance.post<T>(url, data, {
+      ...config,
+      baseURL: this.apiOrigin,
+    });
     return response.data;
   }
 
@@ -220,6 +246,15 @@ class ApiClient {
    */
   async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
     const response = await this.instance.delete<T>(url, config);
+    return response.data;
+  }
+
+  /** DELETE a same-origin companion route with the Management key. */
+  async deleteAtOrigin<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T> {
+    const response = await this.instance.delete<T>(url, {
+      ...config,
+      baseURL: this.apiOrigin,
+    });
     return response.data;
   }
 

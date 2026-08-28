@@ -5,6 +5,13 @@ import {
   normalizeManagementOAuthProviderKey,
 } from '@/utils/providerKeys';
 import type {
+  CodexAgentIdentityAction,
+  CodexAgentIdentityBatchItem,
+  CodexAgentIdentityBatchResponse,
+  CodexAgentIdentityBatchSummary,
+  CodexAgentIdentityListResponse,
+  CodexAgentIdentityRecord,
+  CodexAgentIdentitySummary,
   PluginConfigField,
   PluginConfigObject,
   PluginDeleteResult,
@@ -25,6 +32,17 @@ const asString = (value: unknown): string => {
 };
 
 const asBoolean = (value: unknown): boolean => value === true;
+
+const asNumber = (value: unknown): number => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+// Agent Identity is served by the authenticated companion sidecar at the
+// same origin. Keep this separate from CPA's plugin-resource plane.
+const AGENT_IDENTITY_API_ROOT = '/agent-identity/api';
+const agentIdentityPath = (suffix: string): string =>
+  AGENT_IDENTITY_API_ROOT + (suffix.startsWith('/') ? suffix : '/' + suffix);
 
 const normalizePluginOAuthProvider = (value: unknown): string | undefined => {
   const provider = normalizeManagementOAuthProviderKey(asString(value));
@@ -256,6 +274,107 @@ const normalizeInstallResult = (value: unknown): PluginStoreInstallResult => {
   };
 };
 
+const normalizeIdentityRecord = (value: unknown): CodexAgentIdentityRecord | null => {
+  if (!isRecord(value)) return null;
+  const id = asString(value.id).trim();
+  if (!id) return null;
+  return {
+    id,
+    createdAt: asString(value.created_at ?? value.createdAt).trim(),
+    credentialKind: asString(value.credential_kind ?? value.credentialKind).trim(),
+    email: asString(value.email).trim(),
+    planType: asString(value.plan_type ?? value.planType).trim(),
+    expiresAt: asString(value.expires_at ?? value.expiresAt).trim(),
+    expired: asBoolean(value.expired),
+    fedramp: asBoolean(value.fedramp ?? value.fedRAMP),
+    channelManaged: asBoolean(value.channel_managed ?? value.channelManaged),
+    channelSynced: asBoolean(value.channel_synced ?? value.channelSynced),
+    channelDisabled: asBoolean(value.channel_disabled ?? value.channelDisabled),
+    channelAuthFile: asString(value.channel_auth_file ?? value.channelAuthFile).trim(),
+  };
+};
+
+const normalizeIdentitySummary = (value: unknown): CodexAgentIdentitySummary => {
+  const source = isRecord(value) ? value : {};
+  return {
+    total: asNumber(source.total),
+    active: asNumber(source.active),
+    disabled: asNumber(source.disabled),
+    agentIdentity: asNumber(source.agent_identity ?? source.agentIdentity),
+    personalAccessToken: asNumber(source.personal_access_token ?? source.personalAccessToken),
+    unsynced: asNumber(source.unsynced),
+  };
+};
+
+const normalizeIdentityList = (value: unknown): CodexAgentIdentityListResponse => {
+  const source = isRecord(value) ? value : {};
+  const identities = Array.isArray(source.identities)
+    ? (source.identities
+        .map((item) => normalizeIdentityRecord(item))
+        .filter(Boolean) as CodexAgentIdentityRecord[])
+    : [];
+  return {
+    identities,
+    summary: normalizeIdentitySummary(source.summary),
+    channelManagementEnabled: asBoolean(
+      source.channel_management_enabled ?? source.channelManagementEnabled
+    ),
+    channelSyncError: asString(source.channel_sync_error ?? source.channelSyncError).trim(),
+  };
+};
+
+const normalizeIdentityBatchItem = (value: unknown): CodexAgentIdentityBatchItem | null => {
+  if (!isRecord(value)) return null;
+  return {
+    index: asNumber(value.index),
+    label: asString(value.label).trim(),
+    identityId: asString(value.identity_id ?? value.identityId).trim(),
+    status: asString(value.status).trim(),
+    code: asString(value.code).trim(),
+    message: asString(value.message).trim(),
+    credentialKind: asString(value.credential_kind ?? value.credentialKind).trim(),
+    email: asString(value.email).trim(),
+    planType: asString(value.plan_type ?? value.planType).trim(),
+    expiresAt: asString(value.expires_at ?? value.expiresAt).trim(),
+    fedramp: asBoolean(value.fedramp ?? value.fedRAMP),
+    channelSynced: asBoolean(value.channel_synced ?? value.channelSynced),
+    duplicateOf: asNumber(value.duplicate_of ?? value.duplicateOf),
+  };
+};
+
+const normalizeIdentityBatchSummary = (value: unknown): CodexAgentIdentityBatchSummary => {
+  const source = isRecord(value) ? value : {};
+  return {
+    total: asNumber(source.total),
+    ready: asNumber(source.ready),
+    imported: asNumber(source.imported),
+    duplicate: asNumber(source.duplicate),
+    invalid: asNumber(source.invalid),
+    upstreamUnavailable: asNumber(source.upstream_unavailable ?? source.upstreamUnavailable),
+    failed: asNumber(source.failed),
+    rolledBack: asNumber(source.rolled_back ?? source.rolledBack),
+    rollbackFailed: asNumber(source.rollback_failed ?? source.rollbackFailed),
+    aborted: asNumber(source.aborted),
+  };
+};
+
+const normalizeIdentityBatch = (value: unknown): CodexAgentIdentityBatchResponse => {
+  const source = isRecord(value) ? value : {};
+  const items = Array.isArray(source.items)
+    ? (source.items
+        .map((item) => normalizeIdentityBatchItem(item))
+        .filter(Boolean) as CodexAgentIdentityBatchItem[])
+    : [];
+  return {
+    status: asString(source.status).trim(),
+    preview: asBoolean(source.preview),
+    atomic: asBoolean(source.atomic),
+    transaction: asString(source.transaction).trim(),
+    summary: normalizeIdentityBatchSummary(source.summary),
+    items,
+  };
+};
+
 export interface PluginStoreInstallOptions {
   sourceId?: string;
   version?: string;
@@ -282,6 +401,44 @@ export const pluginsApi = {
 
   patchConfig: (id: string, config: PluginConfigObject) =>
     apiClient.patch(`/plugins/${encodeURIComponent(id)}/config`, config),
+
+  async listAgentIdentities(): Promise<CodexAgentIdentityListResponse> {
+    const data = await apiClient.getAtOrigin(agentIdentityPath('/identities'));
+    return normalizeIdentityList(data);
+  },
+
+  async importAgentIdentity(token: string) {
+    return apiClient.postAtOrigin(agentIdentityPath('/identities/import'), {
+      codex_access_token: token,
+    });
+  },
+
+  async importAgentIdentitiesBatch(
+    content: string,
+    options: { preview?: boolean; atomic?: boolean } = {}
+  ): Promise<CodexAgentIdentityBatchResponse> {
+    const params = new URLSearchParams({
+      preview: String(options.preview ?? false),
+      atomic: String(options.atomic ?? true),
+    });
+    const data = await apiClient.postAtOrigin(
+      agentIdentityPath('/identities/import/batch') + '?' + params.toString(),
+      content,
+      { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
+    );
+    return normalizeIdentityBatch(data);
+  },
+
+  identityAction(id: string, action: CodexAgentIdentityAction) {
+    return apiClient.postAtOrigin(
+      agentIdentityPath('/identities/' + encodeURIComponent(id) + '/actions'),
+      { action }
+    );
+  },
+
+  deleteAgentIdentity(id: string) {
+    return apiClient.deleteAtOrigin(agentIdentityPath('/identities/' + encodeURIComponent(id)));
+  },
 };
 
 export const pluginStoreApi = {
