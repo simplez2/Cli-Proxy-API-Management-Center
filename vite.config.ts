@@ -4,6 +4,11 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 import path from 'path';
 import { execSync } from 'child_process';
 import fs from 'fs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const reactRouterDir = path.dirname(require.resolve('react-router/package.json'));
+const reactRouterEntry = path.join(reactRouterDir, 'dist/development/index.mjs');
 
 // Get version from environment, git tag, or package.json
 function getVersion(): string {
@@ -47,9 +52,14 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(getVersion())
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      // Pin both router specifiers to one physical runtime entry so hooks and
+      // RouterProvider share one context singleton in the single-file build.
+      { find: 'react-router-dom', replacement: reactRouterEntry },
+      { find: 'react-router', replacement: reactRouterEntry }
+    ],
+    dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom']
   },
   css: {
     modules: {
