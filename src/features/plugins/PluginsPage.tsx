@@ -8,7 +8,6 @@ import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import {
-  IconExternalLink,
   IconGithub,
   IconPlug,
   IconRefreshCw,
@@ -33,7 +32,6 @@ import {
   type PluginConfigDraft,
 } from './pluginConfigDraft';
 import {
-  buildAgentIdentityManagementURL,
   CODEX_AGENT_IDENTITY_PLUGIN_ID,
   getPluginTitle,
   notifyPluginResourcesChanged,
@@ -650,17 +648,10 @@ export function PluginsPage() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={() =>
-                        window.open(
-                          buildAgentIdentityManagementURL(apiBase),
-                          '_blank',
-                          'noopener,noreferrer'
-                        )
-                      }
+                      onClick={() => navigate('/plugin-pages/codex-agent-identity/0')}
                       disabled={!connected || actionBusy || !plugin.effectiveEnabled}
                       title={t('plugin_management.agent_identity_management_hint')}
                     >
-                      <IconExternalLink size={14} />
                       {t('plugin_management.agent_identity_management')}
                     </Button>
                   ) : null}

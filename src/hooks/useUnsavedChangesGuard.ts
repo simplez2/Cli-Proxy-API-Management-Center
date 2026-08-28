@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import type { BlockerFunction } from 'react-router';
-import { useBlocker, useLocation } from 'react-router';
+// Keep every router hook on the same react-router-dom instance as RouterProvider.
+// A direct import from react-router can resolve to a second package copy and
+// makes the Router context look missing at runtime.
+import { useBlocker, useLocation, type BlockerFunction } from 'react-router-dom';
 import { useNotificationStore } from '@/stores';
 
 type ConfirmationVariant = 'danger' | 'primary' | 'secondary';

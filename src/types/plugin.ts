@@ -116,6 +116,77 @@ export interface PluginStoreInstallResult {
   restartRequired: boolean;
 }
 
+export interface CodexAgentIdentityRecord {
+  id: string;
+  createdAt: string;
+  credentialKind: string;
+  email: string;
+  planType: string;
+  expiresAt: string;
+  expired: boolean;
+  fedramp: boolean;
+  channelManaged: boolean;
+  channelSynced: boolean;
+  channelDisabled: boolean;
+  channelAuthFile: string;
+}
+
+export interface CodexAgentIdentitySummary {
+  total: number;
+  active: number;
+  disabled: number;
+  agentIdentity: number;
+  personalAccessToken: number;
+  unsynced: number;
+}
+
+export interface CodexAgentIdentityListResponse {
+  identities: CodexAgentIdentityRecord[];
+  summary: CodexAgentIdentitySummary;
+  channelManagementEnabled: boolean;
+  channelSyncError: string;
+}
+
+export type CodexAgentIdentityAction = 'enable' | 'disable' | 'refresh';
+
+export interface CodexAgentIdentityBatchItem {
+  index: number;
+  label: string;
+  identityId: string;
+  status: string;
+  code: string;
+  message: string;
+  credentialKind: string;
+  email: string;
+  planType: string;
+  expiresAt: string;
+  fedramp: boolean;
+  channelSynced: boolean;
+  duplicateOf: number;
+}
+
+export interface CodexAgentIdentityBatchSummary {
+  total: number;
+  ready: number;
+  imported: number;
+  duplicate: number;
+  invalid: number;
+  upstreamUnavailable: number;
+  failed: number;
+  rolledBack: number;
+  rollbackFailed: number;
+  aborted: number;
+}
+
+export interface CodexAgentIdentityBatchResponse {
+  status: string;
+  preview: boolean;
+  atomic: boolean;
+  transaction: string;
+  summary: CodexAgentIdentityBatchSummary;
+  items: CodexAgentIdentityBatchItem[];
+}
+
 export interface CodexQuotaSchedulerQuarantineStatus {
   total: number;
   cooldown: number;

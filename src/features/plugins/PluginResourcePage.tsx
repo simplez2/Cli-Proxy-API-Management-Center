@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useHeaderRefresh } from '@/hooks/useHeaderRefresh';
@@ -11,6 +11,8 @@ import { CodexAgentIdentityPage } from './CodexAgentIdentityPage';
 import { CodexQuotaSchedulerPage } from './CodexQuotaSchedulerPage';
 import {
   collectPluginResourceEntries,
+  CODEX_AGENT_IDENTITY_PLUGIN_ID,
+  CODEX_QUOTA_SCHEDULER_PLUGIN_ID,
   PLUGIN_RESOURCES_REFRESH_EVENT,
   resolvePluginAssetURL,
 } from './pluginResources';
@@ -31,9 +33,24 @@ const parseMenuIndex = (value = '') => {
   return Number.isInteger(index) && index >= 0 ? index : -1;
 };
 
+// MainLayout renders routes inside a transition layer with an explicit
+// location.  In that nested useRoutes tree, useParams can legitimately expose
+// only the outer `/*` match.  Keep the resource page addressable in both the
+// normal route tree and a deep-linked/transition render by recovering the
+// plugin segment from the resolved pathname when the inner params are absent.
+const parsePluginPath = (pathname: string) => {
+  const match = /^\/plugin-pages\/([^/]+)(?:\/(\d+))?(?:\/.*)?$/.exec(pathname);
+  if (!match) return { pluginId: '', menuIndex: -1 };
+  return {
+    pluginId: safeDecodeURIComponent(match[1] || ''),
+    menuIndex: parseMenuIndex(match[2] || ''),
+  };
+};
+
 export function PluginResourcePage() {
   const { t } = useTranslation();
   const params = useParams<{ pluginId: string; menuIndex: string }>();
+  const location = useLocation();
   const connectionStatus = useAuthStore((state) => state.connectionStatus);
   const apiBase = useAuthStore((state) => state.apiBase);
 
@@ -42,10 +59,24 @@ export function PluginResourcePage() {
   const [error, setError] = useState('');
 
   const connected = connectionStatus === 'connected';
-  const pluginID = useMemo(() => safeDecodeURIComponent(params.pluginId), [params.pluginId]);
-  const menuIndex = useMemo(() => parseMenuIndex(params.menuIndex), [params.menuIndex]);
+  const pathParams = useMemo(() => parsePluginPath(location.pathname), [location.pathname]);
+  const pluginID = useMemo(
+    () => safeDecodeURIComponent(params.pluginId || pathParams.pluginId),
+    [params.pluginId, pathParams.pluginId]
+  );
+  const menuIndex = useMemo(
+    () => parseMenuIndex(params.menuIndex || String(pathParams.menuIndex)),
+    [params.menuIndex, pathParams.menuIndex]
+  );
+  const isNativePlugin =
+    pluginID === CODEX_AGENT_IDENTITY_PLUGIN_ID || pluginID === CODEX_QUOTA_SCHEDULER_PLUGIN_ID;
 
   const loadResource = useCallback(async () => {
+    if (isNativePlugin) {
+      setLoading(false);
+      setError('');
+      return;
+    }
     if (!connected) {
       setLoading(false);
       setError(t('notification.connection_required'));
@@ -66,7 +97,7 @@ export function PluginResourcePage() {
     } finally {
       setLoading(false);
     }
-  }, [connected, t]);
+  }, [connected, isNativePlugin, t]);
 
   useHeaderRefresh(loadResource, connected);
 
@@ -89,6 +120,18 @@ export function PluginResourcePage() {
 
   const iframeSrc =
     resource?.kind === 'iframe' ? resolvePluginAssetURL(resource.menu.path, apiBase) : '';
+
+  if (isNativePlugin) {
+    return (
+      <div className={styles.page}>
+        {pluginID === CODEX_AGENT_IDENTITY_PLUGIN_ID ? (
+          <CodexAgentIdentityPage />
+        ) : (
+          <CodexQuotaSchedulerPage />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

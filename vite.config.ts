@@ -4,6 +4,14 @@ import { viteSingleFile } from 'vite-plugin-singlefile';
 import path from 'path';
 import { execSync } from 'child_process';
 import fs from 'fs';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const reactRouterDir = path.dirname(require.resolve('react-router/package.json'));
+// React Router 7 exposes the browser APIs from the same runtime package.  Keep
+// both package specifiers on one physical entry so RouterProvider and hooks
+// cannot carry different context singletons into the single-file build.
+const reactRouterEntry = path.join(reactRouterDir, 'dist/development/index.mjs');
 
 // Get version from environment, git tag, or package.json
 function getVersion(): string {
@@ -47,9 +55,15 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(getVersion())
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src')
-    }
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      // Pin every Router import (including react-router-dom) to one entry.
+      // The dom-export wrapper is a second module graph and can duplicate the
+      // LocationContext singleton in a bundled management.html.
+      { find: 'react-router-dom', replacement: reactRouterEntry },
+      { find: 'react-router', replacement: reactRouterEntry }
+    ],
+    dedupe: ['react', 'react-dom', 'react-router', 'react-router-dom']
   },
   css: {
     modules: {

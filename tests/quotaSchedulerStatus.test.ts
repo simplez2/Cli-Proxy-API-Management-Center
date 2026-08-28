@@ -80,6 +80,8 @@ describe('Codex Quota Scheduler status', () => {
       schedulerMode: 'shadow',
       serialSwitchPercent: 96,
       warmupModel: 'gpt-5.6-luna',
+      serial5hHandoffMode: 'inherit_global',
+      serial5hSwitchPercent: 98,
     });
   });
 

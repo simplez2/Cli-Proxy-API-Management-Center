@@ -28,6 +28,10 @@ const createMainRoutes = (supportsPlugin: boolean) => [
   { path: '/auth-files/oauth-model-alias', element: <AuthFilesOAuthModelAliasEditPage /> },
   { path: '/oauth', element: <OAuthPage /> },
   { path: '/quota', element: <QuotaPage /> },
+  // Keep first-party native pages resolvable while the asynchronous plugin
+  // capability probe is still false or temporarily unavailable.
+  { path: '/plugin-pages/codex-agent-identity/:menuIndex', element: <PluginResourcePage /> },
+  { path: '/plugin-pages/codex-quota-scheduler/:menuIndex', element: <PluginResourcePage /> },
   ...(supportsPlugin
     ? [
         { path: '/plugin-pages/:pluginId/:menuIndex', element: <PluginResourcePage /> },
